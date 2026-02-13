@@ -12,11 +12,11 @@ import "./App.css";
 import { Toaster } from "./components/refine-ui/notification/toaster";
 import { useNotificationProvider } from "./components/refine-ui/notification/use-notification-provider";
 import { ThemeProvider } from "./components/refine-ui/theme/theme-provider";
-import { dataProvider } from "./providers/data";
 import { Layout } from "@/components/refine-ui/layout/layout.tsx";
 import Dashboard from "@/pages/dashboard.tsx";
 import SubjectList from "@/pages/subjects/list.tsx";
 import SubjectCreate from "@/pages/subjects/create.tsx";
+import { dataProvider } from "@/providers/dataProvider.tsx";
 
 function App() {
   return (
@@ -44,6 +44,7 @@ function App() {
                 {
                   name: "subjects",
                   list: "/subjects",
+                  create: "/subjects/create",
                   meta: { label: "Subjects", icon: <BookOpenCheckIcon /> },
                 },
               ]}
