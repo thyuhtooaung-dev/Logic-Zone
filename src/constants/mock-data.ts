@@ -1,4 +1,4 @@
-import { Subject } from "../types";
+import { Subject } from "@/types";
 
 export const MOCK_SUBJECTS: Subject[] = [
   {
