@@ -1,8 +1,7 @@
-import { Home, BookOpenCheckIcon } from "lucide-react";
+import { Home, BookOpenCheckIcon, GraduationCap } from "lucide-react";
 import { Refine } from "@refinedev/core";
 import { DevtoolsPanel, DevtoolsProvider } from "@refinedev/devtools";
 import { RefineKbar, RefineKbarProvider } from "@refinedev/kbar";
-
 import routerProvider, {
   DocumentTitleHandler,
   UnsavedChangesNotifier,
@@ -17,6 +16,8 @@ import Dashboard from "@/pages/dashboard.tsx";
 import SubjectList from "@/pages/subjects/list.tsx";
 import SubjectCreate from "@/pages/subjects/create.tsx";
 import { dataProvider } from "@/providers/dataProvider.tsx";
+import ClassesList from "@/pages/classes/list.tsx";
+import ClassesCreate from "@/pages/classes/create.tsx";
 
 function App() {
   return (
@@ -47,6 +48,12 @@ function App() {
                   create: "/subjects/create",
                   meta: { label: "Subjects", icon: <BookOpenCheckIcon /> },
                 },
+                {
+                  name: "classes",
+                  list: "/classes",
+                  create: "/classes/create",
+                  meta: { label: "Classes", icon: <GraduationCap /> },
+                },
               ]}
             >
               <Routes>
@@ -59,8 +66,12 @@ function App() {
                 >
                   <Route index element={<Dashboard />} />
                   <Route path="subjects">
-                    <Route index element={<SubjectList/>}></Route>
-                    <Route path="create" element={<SubjectCreate/>}></Route>
+                    <Route index element={<SubjectList />}></Route>
+                    <Route path="create" element={<SubjectCreate />}></Route>
+                  </Route>
+                  <Route path="classes">
+                    <Route index element={<ClassesList />}></Route>
+                    <Route path="create" element={<ClassesCreate />}></Route>
                   </Route>
                 </Route>
               </Routes>
