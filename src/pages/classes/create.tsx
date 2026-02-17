@@ -12,7 +12,7 @@ import {
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "@refinedev/react-hook-form";
 import { classSchema } from "@/lib/schema.ts";
-import * as z from "zod";
+import { useEffect, useState } from "react";
 
 import {
   Form,
@@ -23,7 +23,6 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label.tsx";
 import {
   Select,
   SelectContent,
@@ -32,10 +31,15 @@ import {
   SelectValue,
 } from "@/components/ui/select.tsx";
 import { Textarea } from "@/components/ui/textarea.tsx";
-import { Loader2 } from "lucide-react";
+import { ImagePlus, Loader2, Trash2 } from "lucide-react";
 
 const Create = () => {
   const back = useBack();
+  const [isCloudinaryReady, setIsCloudinaryReady] = useState(false);
+  const [uploadError, setUploadError] = useState<string | null>(null);
+
+  const cloudName = import.meta.env.VITE_CLOUDINARY_CLOUD_NAME;
+  const uploadPreset = import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET;
 
   const form = useForm({
     resolver: zodResolver(classSchema),
@@ -50,16 +54,78 @@ const Create = () => {
 
   const {
     handleSubmit,
+    setValue,
+    watch,
     formState: { isSubmitting },
     control,
+    refineCore,
   } = form;
 
-  const onSubmit = async (values: z.infer<typeof classSchema>) => {
-    try {
-      console.log(values);
-    } catch (error) {
-      console.error("Error creating class:", error);
+  const bannerUrl = watch("bannerUrl");
+
+  useEffect(() => {
+    if (window.cloudinary) {
+      setIsCloudinaryReady(true);
+      return;
     }
+
+    const script = document.createElement("script");
+    script.src = "https://widget.cloudinary.com/v2.0/global/all.js";
+    script.async = true;
+    script.onload = () => setIsCloudinaryReady(true);
+    script.onerror = () =>
+      setUploadError("Failed to load upload widget. Please refresh and try again.");
+    document.body.appendChild(script);
+  }, []);
+
+  const handleBannerUpload = () => {
+    if (!cloudName || !uploadPreset) {
+      setUploadError("Cloudinary is not configured.");
+      return;
+    }
+
+    if (!window.cloudinary) {
+      setUploadError("Upload widget is not ready yet.");
+      return;
+    }
+
+    setUploadError(null);
+
+    const widget = window.cloudinary.createUploadWidget(
+      {
+        cloudName,
+        uploadPreset,
+        multiple: false,
+        maxFiles: 1,
+        resourceType: "image",
+        sources: ["local", "url", "camera"],
+      },
+      (error, result) => {
+        if (error) {
+          setUploadError("Upload failed. Please try again.");
+          return;
+        }
+
+        if (result?.event === "success") {
+          setValue("bannerUrl", result.info.secure_url, {
+            shouldDirty: true,
+            shouldValidate: true,
+          });
+          setValue("bannerCldPubId", result.info.public_id, {
+            shouldDirty: true,
+            shouldValidate: true,
+          });
+          setUploadError(null);
+        }
+      },
+    );
+
+    widget.open();
+  };
+
+  const clearBanner = () => {
+    setValue("bannerUrl", "", { shouldDirty: true, shouldValidate: true });
+    setValue("bannerCldPubId", "", { shouldDirty: true, shouldValidate: true });
   };
 
   const teachers = [
@@ -110,14 +176,73 @@ const Create = () => {
 
           <CardContent className="mt-7">
             <Form {...form}>
-              <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
-                <div className="space-y-3">
-                  <Label>
-                    Banner Image <span className="text-orange-600">*</span>
-                  </Label>
+              <form
+                onSubmit={handleSubmit(refineCore.onFinish)}
+                className="space-y-5"
+              >
+                <FormField
+                  control={control}
+                  name="bannerUrl"
+                  render={({ field }) => (
+                    <FormItem className="space-y-3">
+                      <FormLabel>
+                        Banner Image <span className="text-orange-600">*</span>
+                      </FormLabel>
 
-                  <p>Upload image widget</p>
-                </div>
+                      <FormControl>
+                        <Input type="hidden" {...field} />
+                      </FormControl>
+
+                      {bannerUrl ? (
+                        <div className="upload-preview">
+                          <img src={bannerUrl} alt="Class banner preview" />
+                          <Button
+                            type="button"
+                            variant="destructive"
+                            size="icon"
+                            onClick={clearBanner}
+                          >
+                            <Trash2 className="size-4" />
+                          </Button>
+                        </div>
+                      ) : (
+                        <Button
+                          type="button"
+                          variant="outline"
+                          className="upload-dropzone"
+                          onClick={handleBannerUpload}
+                          disabled={!isCloudinaryReady}
+                        >
+                          <div className="upload-prompt">
+                            <ImagePlus className="icon" />
+                            <div>
+                              <p>Click to upload class banner</p>
+                              <p>PNG, JPG or WEBP</p>
+                            </div>
+                          </div>
+                        </Button>
+                      )}
+
+                      {uploadError ? (
+                        <p className="text-sm text-destructive">{uploadError}</p>
+                      ) : null}
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                <FormField
+                  control={control}
+                  name="bannerCldPubId"
+                  render={({ field }) => (
+                    <FormItem className="hidden">
+                      <FormControl>
+                        <Input type="hidden" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
 
                 <FormField
                   control={control}
