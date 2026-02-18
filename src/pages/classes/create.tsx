@@ -1,19 +1,9 @@
-import { CreateView } from "@/components/refine-ui/views/create-view.tsx";
-import { Breadcrumb } from "@/components/refine-ui/layout/breadcrumb.tsx";
-import { Button } from "@/components/ui/button.tsx";
-import { useBack } from "@refinedev/core";
-import { Separator } from "@/components/ui/separator.tsx";
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card.tsx";
-import { zodResolver } from "@hookform/resolvers/zod";
 import { useForm } from "@refinedev/react-hook-form";
-import { classSchema } from "@/lib/schema.ts";
-import { useEffect, useState } from "react";
-
+import { zodResolver } from "@hookform/resolvers/zod";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Separator } from "@/components/ui/separator";
 import {
   Form,
   FormControl,
@@ -22,24 +12,27 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
 import {
   Select,
   SelectContent,
   SelectItem,
   SelectTrigger,
   SelectValue,
-} from "@/components/ui/select.tsx";
-import { Textarea } from "@/components/ui/textarea.tsx";
-import { ImagePlus, Loader2, Trash2 } from "lucide-react";
+} from "@/components/ui/select";
 
-const Create = () => {
+import { CreateView } from "@/components/refine-ui/views/create-view";
+import { Breadcrumb } from "@/components/refine-ui/layout/breadcrumb";
+
+import { Textarea } from "@/components/ui/textarea";
+import { useBack, useList } from "@refinedev/core";
+import { Loader2 } from "lucide-react";
+import { classSchema } from "@/lib/schema";
+import UploadWidget from "@/components/upload-widget";
+import { Subject, User } from "@/types";
+import z from "zod";
+
+const ClassesCreate = () => {
   const back = useBack();
-  const [isCloudinaryReady, setIsCloudinaryReady] = useState(false);
-  const [uploadError, setUploadError] = useState<string | null>(null);
-
-  const cloudName = import.meta.env.VITE_CLOUDINARY_CLOUD_NAME;
-  const uploadPreset = import.meta.env.VITE_CLOUDINARY_UPLOAD_PRESET;
 
   const form = useForm({
     resolver: zodResolver(classSchema),
@@ -53,104 +46,48 @@ const Create = () => {
   });
 
   const {
+    refineCore: { onFinish },
     handleSubmit,
-    setValue,
-    watch,
-    formState: { isSubmitting },
+    formState: { isSubmitting, errors },
     control,
-    refineCore,
   } = form;
 
-  const bannerUrl = watch("bannerUrl");
+  const bannerPublicId = form.watch("bannerCldPubId");
 
-  useEffect(() => {
-    if (window.cloudinary) {
-      setIsCloudinaryReady(true);
-      return;
+  const onSubmit = async (values: z.infer<typeof classSchema>) => {
+    try {
+      await onFinish(values);
+    } catch (error) {
+      console.error("Error creating class:", error);
     }
+  };
 
-    const script = document.createElement("script");
-    script.src = "https://widget.cloudinary.com/v2.0/global/all.js";
-    script.async = true;
-    script.onload = () => setIsCloudinaryReady(true);
-    script.onerror = () =>
-      setUploadError("Failed to load upload widget. Please refresh and try again.");
-    document.body.appendChild(script);
-  }, []);
+  const { query: subjectsQuery } = useList<Subject>({
+    resource: "subjects",
+    pagination: {
+      pageSize: 100,
+    },
+  });
 
-  const handleBannerUpload = () => {
-    if (!cloudName || !uploadPreset) {
-      setUploadError("Cloudinary is not configured.");
-      return;
-    }
-
-    if (!window.cloudinary) {
-      setUploadError("Upload widget is not ready yet.");
-      return;
-    }
-
-    setUploadError(null);
-
-    const widget = window.cloudinary.createUploadWidget(
+  const { query: teachersQuery } = useList<User>({
+    resource: "users",
+    filters: [
       {
-        cloudName,
-        uploadPreset,
-        multiple: false,
-        maxFiles: 1,
-        resourceType: "image",
-        sources: ["local", "url", "camera"],
+        field: "role",
+        operator: "eq",
+        value: "teacher",
       },
-      (error, result) => {
-        if (error) {
-          setUploadError("Upload failed. Please try again.");
-          return;
-        }
-
-        if (result?.event === "success") {
-          setValue("bannerUrl", result.info.secure_url, {
-            shouldDirty: true,
-            shouldValidate: true,
-          });
-          setValue("bannerCldPubId", result.info.public_id, {
-            shouldDirty: true,
-            shouldValidate: true,
-          });
-          setUploadError(null);
-        }
-      },
-    );
-
-    widget.open();
-  };
-
-  const clearBanner = () => {
-    setValue("bannerUrl", "", { shouldDirty: true, shouldValidate: true });
-    setValue("bannerCldPubId", "", { shouldDirty: true, shouldValidate: true });
-  };
-
-  const teachers = [
-    {
-      id: 1,
-      name: "John Doe",
+    ],
+    pagination: {
+      pageSize: 100,
     },
-    {
-      id: 2,
-      name: "Jane Doe",
-    },
-  ];
+  });
 
-  const subjects = [
-    {
-      id: 1,
-      name: "Math",
-      code: "MATH",
-    },
-    {
-      id: 2,
-      name: "English",
-      code: "ENG",
-    },
-  ];
+  const teachers = teachersQuery.data?.data || [];
+  const teachersLoading = teachersQuery.isLoading;
+
+  const subjects = subjectsQuery.data?.data || [];
+  const subjectsLoading = subjectsQuery.isLoading;
 
   return (
     <CreateView className="class-view">
@@ -176,70 +113,48 @@ const Create = () => {
 
           <CardContent className="mt-7">
             <Form {...form}>
-              <form
-                onSubmit={handleSubmit(refineCore.onFinish)}
-                className="space-y-5"
-              >
+              <form onSubmit={handleSubmit(onSubmit)} className="space-y-5">
                 <FormField
                   control={control}
                   name="bannerUrl"
                   render={({ field }) => (
-                    <FormItem className="space-y-3">
+                    <FormItem>
                       <FormLabel>
                         Banner Image <span className="text-orange-600">*</span>
                       </FormLabel>
-
                       <FormControl>
-                        <Input type="hidden" {...field} />
+                        <UploadWidget
+                          value={
+                            field.value
+                              ? {
+                                  url: field.value,
+                                  publicId: bannerPublicId ?? "",
+                                }
+                              : null
+                          }
+                          onChange={(file) => {
+                            if (file) {
+                              field.onChange(file.url);
+                              form.setValue("bannerCldPubId", file.publicId, {
+                                shouldValidate: true,
+                                shouldDirty: true,
+                              });
+                            } else {
+                              field.onChange("");
+                              form.setValue("bannerCldPubId", "", {
+                                shouldValidate: true,
+                                shouldDirty: true,
+                              });
+                            }
+                          }}
+                        />
                       </FormControl>
-
-                      {bannerUrl ? (
-                        <div className="upload-preview">
-                          <img src={bannerUrl} alt="Class banner preview" />
-                          <Button
-                            type="button"
-                            variant="destructive"
-                            size="icon"
-                            onClick={clearBanner}
-                          >
-                            <Trash2 className="size-4" />
-                          </Button>
-                        </div>
-                      ) : (
-                        <Button
-                          type="button"
-                          variant="outline"
-                          className="upload-dropzone"
-                          onClick={handleBannerUpload}
-                          disabled={!isCloudinaryReady}
-                        >
-                          <div className="upload-prompt">
-                            <ImagePlus className="icon" />
-                            <div>
-                              <p>Click to upload class banner</p>
-                              <p>PNG, JPG or WEBP</p>
-                            </div>
-                          </div>
-                        </Button>
+                      <FormMessage />
+                      {errors.bannerCldPubId && !errors.bannerUrl && (
+                        <p className="text-destructive text-sm">
+                          {errors.bannerCldPubId.message?.toString()}
+                        </p>
                       )}
-
-                      {uploadError ? (
-                        <p className="text-sm text-destructive">{uploadError}</p>
-                      ) : null}
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={control}
-                  name="bannerCldPubId"
-                  render={({ field }) => (
-                    <FormItem className="hidden">
-                      <FormControl>
-                        <Input type="hidden" {...field} />
-                      </FormControl>
-                      <FormMessage />
                     </FormItem>
                   )}
                 />
@@ -277,6 +192,7 @@ const Create = () => {
                             field.onChange(Number(value))
                           }
                           value={field.value?.toString()}
+                          disabled={subjectsLoading}
                         >
                           <FormControl>
                             <SelectTrigger className="w-full">
@@ -309,7 +225,8 @@ const Create = () => {
                         </FormLabel>
                         <Select
                           onValueChange={field.onChange}
-                          value={field.value}
+                          value={field.value?.toString()}
+                          disabled={teachersLoading}
                         >
                           <FormControl>
                             <SelectTrigger className="w-full">
@@ -318,10 +235,7 @@ const Create = () => {
                           </FormControl>
                           <SelectContent>
                             {teachers.map((teacher) => (
-                              <SelectItem
-                                key={teacher.id}
-                                value={teacher.id.toString()}
-                              >
+                              <SelectItem key={teacher.id} value={teacher.id}>
                                 {teacher.name}
                               </SelectItem>
                             ))}
@@ -339,11 +253,13 @@ const Create = () => {
                     name="capacity"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel>Capacity</FormLabel>
+                        <FormLabel>
+                          Capacity <span className="text-orange-600">*</span>
+                        </FormLabel>
                         <FormControl>
                           <Input
                             type="number"
-                            className={"no-spinner"}
+                            min={1}
                             placeholder="30"
                             onChange={(e) => {
                               const value = e.target.value;
@@ -393,7 +309,9 @@ const Create = () => {
                   name="description"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Description</FormLabel>
+                      <FormLabel>
+                        Description <span className="text-orange-600">*</span>
+                      </FormLabel>
                       <FormControl>
                         <Textarea
                           placeholder="Brief description about the class"
@@ -426,4 +344,4 @@ const Create = () => {
   );
 };
 
-export default Create;
+export default ClassesCreate;
