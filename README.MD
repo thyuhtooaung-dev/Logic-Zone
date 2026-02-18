@@ -15,6 +15,23 @@ A React Framework for building internal tools, admin panels, dashboards & B2B ap
 
 Refine's hooks and components simplifies the development process and eliminates the repetitive tasks by providing industry-standard solutions for crucial aspects of a project, including authentication, access control, routing, networking, state management, and i18n.
 
+## Environment Variables
+
+Create your local env file from the example:
+
+```bash
+cp .env.example .env
+```
+
+The following variables are required:
+
+- `VITE_CLOUDINARY_UPLOAD_URL` (example: `https://api.cloudinary.com/v1_1/demo/image/upload`)
+- `VITE_CLOUDINARY_CLOUD_NAME` (example: `demo`)
+- `VITE_CLOUDINARY_UPLOAD_PRESET` (example: `unsigned_preset`)
+- `VITE_BACKEND_BASE_URL` (example: `http://localhost:3000` or `https://api.example.com`)
+
+`src/constants/index.ts` reads these keys via `getEnvVar(...)`. If any required key is missing, the app throws at startup with `Missing environment variable: <KEY>`.
+
 ## Available Scripts
 
 ### Running the development server.

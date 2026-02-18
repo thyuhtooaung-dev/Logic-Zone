@@ -7,18 +7,25 @@ import { UploadWidgetProps, UploadWidgetValue } from "@/types";
 function UploadWidget({
   value = null,
   onChange,
+  onError,
   disabled = false,
 }: UploadWidgetProps) {
   const widgetRef = useRef<CloudinaryWidget | null>(null);
   const onChangeRef = useRef(onChange);
+  const onErrorRef = useRef(onError);
 
   const [preview, setPreview] = useState<UploadWidgetValue | null>(value);
   const [deleteToken, setDeleteToken] = useState<string | null>(null);
   const [isRemoving, setIsRemoving] = useState(false);
+  const [widgetError, setWidgetError] = useState<string | null>(null);
 
   useEffect(() => {
     onChangeRef.current = onChange;
   }, [onChange]);
+
+  useEffect(() => {
+    onErrorRef.current = onError;
+  }, [onError]);
 
   useEffect(() => {
     setPreview(value);
@@ -29,6 +36,17 @@ function UploadWidget({
 
   useEffect(() => {
     if (typeof window === "undefined") return;
+
+    const MAX_RETRIES = 8;
+    const BASE_DELAY_MS = 300;
+    let retryCount = 0;
+    let timeoutId: number | null = null;
+    let disposed = false;
+
+    const reportWidgetError = (error: Error) => {
+      setWidgetError(error.message);
+      onErrorRef.current?.(error);
+    };
 
     const initializeWidget = () => {
       if (!window.cloudinary || widgetRef.current) return false;
@@ -56,18 +74,38 @@ function UploadWidget({
         },
       );
 
+      setWidgetError(null);
       return true;
     };
 
-    if (initializeWidget()) return;
+    const attemptInitialize = () => {
+      if (disposed) return;
 
-    const intervalId = window.setInterval(() => {
-      if (initializeWidget()) {
-        window.clearInterval(intervalId);
+      if (initializeWidget()) return;
+
+      retryCount += 1;
+      if (retryCount >= MAX_RETRIES) {
+        reportWidgetError(
+          new Error(
+            "Cloudinary widget failed to load. Please refresh and try again.",
+          ),
+        );
+        return;
       }
-    }, 500);
 
-    return () => window.clearInterval(intervalId);
+      // Linear backoff to avoid hammering while the script is still loading.
+      const nextDelay = BASE_DELAY_MS + retryCount * 200;
+      timeoutId = window.setTimeout(attemptInitialize, nextDelay);
+    };
+
+    attemptInitialize();
+
+    return () => {
+      disposed = true;
+      if (timeoutId !== null) {
+        window.clearTimeout(timeoutId);
+      }
+    };
   }, []);
 
   const openWidget = () => {
@@ -86,26 +124,38 @@ function UploadWidget({
         const params = new URLSearchParams();
         params.append("token", deleteToken);
 
-        await fetch(
+        const response = await fetch(
           `https://api.cloudinary.com/v1_1/${CLOUDINARY_CLOUD_NAME}/delete_by_token`,
           {
             method: "POST",
             body: params,
           },
         );
+
+        if (!response.ok) {
+          throw new Error(
+            `Cloudinary delete failed with status ${response.status}`,
+          );
+        }
       }
-    } catch (error) {
-      console.error("Failed to remove image from Cloudinary", error);
-    } finally {
+
       setPreview(null);
       setDeleteToken(null);
       onChangeRef.current?.(null);
+    } catch (error) {
+      console.error("Failed to remove image from Cloudinary", error);
+    } finally {
       setIsRemoving(false);
     }
   };
 
   return (
     <div className="space-y-2">
+      {widgetError ? (
+        <p className="text-sm text-destructive" role="alert">
+          {widgetError}
+        </p>
+      ) : null}
       {preview ? (
         <div className="upload-preview">
           <img src={preview.url} alt="Uploaded file" />

@@ -62,6 +62,7 @@ export interface UploadWidgetValue {
 export interface UploadWidgetProps {
   value?: UploadWidgetValue | null;
   onChange?: (value: UploadWidgetValue | null) => void;
+  onError?: (error: Error) => void;
   disabled?: boolean;
 }
 
