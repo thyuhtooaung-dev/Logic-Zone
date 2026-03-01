@@ -15,7 +15,7 @@ import { Layout } from "@/components/refine-ui/layout/layout.tsx";
 import Dashboard from "@/pages/dashboard.tsx";
 import SubjectList from "@/pages/subjects/list.tsx";
 import SubjectCreate from "@/pages/subjects/create.tsx";
-import { dataProvider } from "@/providers/dataProvider.tsx";
+import {dataProvider} from "@/providers/data.ts";
 import ClassesList from "@/pages/classes/list.tsx";
 import ClassesCreate from "@/pages/classes/create.tsx";
 
