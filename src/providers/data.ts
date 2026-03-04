@@ -1,7 +1,10 @@
-import { createDataProvider, CreateDataProviderOptions } from "@refinedev/rest";
+import {
+  createDataProvider,
+  CreateDataProviderOptions,
+} from "@refinedev/rest";
 import { ListResponse } from "@/types";
 import { BACKEND_BASE_URL } from "@/constants";
-import { HttpError } from "@refinedev/core";
+import { CreateResponse, HttpError } from "@refinedev/core";
 
 if (!BACKEND_BASE_URL) {
   throw new Error("BACKEND_BASE_URL is required");
@@ -11,9 +14,10 @@ const buildHttpError = async (response: Response): Promise<HttpError> => {
   let message = "Request failed.";
 
   try {
-    const payload = (await response.json()) as {message?: string};
+    const payload = (await response.json()) as { message?: string; error?: string };
 
     if (payload?.message) message = payload.message;
+    if (!payload?.message && payload?.error) message = payload.error;
   } catch {
     // Ignore Error
   }
@@ -21,9 +25,8 @@ const buildHttpError = async (response: Response): Promise<HttpError> => {
   return {
     message,
     statusCode: response.status,
-  }
-
-}
+  };
+};
 
 const options: CreateDataProviderOptions = {
   getList: {
@@ -44,13 +47,18 @@ const options: CreateDataProviderOptions = {
           if (field === "department") params.department = value;
           if (field === "name" || field === "code") params.search = value;
         }
+
+        if (resource === "users") {
+          if (field === "role") params.role = value;
+          if (field === "name" || field === "email") params.search = value;
+        }
       });
 
       return params;
     },
 
     mapResponse: async (response) => {
-      if (!response.ok) throw await buildHttpError(response)
+      if (!response.ok) throw await buildHttpError(response);
       const payload: ListResponse<Record<string, unknown>> = await response
         .clone()
         .json();
@@ -65,6 +73,19 @@ const options: CreateDataProviderOptions = {
         .json();
 
       return payload.pagination?.total ?? payload.data?.length ?? 0;
+    },
+  },
+
+  create: {
+    getEndpoint: ({ resource }) => resource,
+
+    buildBodyParams: async ({ variables }) => variables,
+
+    mapResponse: async (response) => {
+      if (!response.ok) throw await buildHttpError(response);
+      const json: CreateResponse = await response.json();
+
+      return json.data;
     },
   },
 };
