@@ -18,6 +18,7 @@ import {
   SelectValue,
 } from "@/components/ui/select.tsx";
 import { Subject, User } from "@/types";
+import { ShowButton } from "@/components/refine-ui/buttons/show.tsx";
 
 type ClassListItem = {
   id: number;
@@ -139,6 +140,21 @@ const ClassesList = () => {
           header: () => <p className={"column-title"}>Capacity</p>,
           cell: ({ getValue }) => (
             <span className={"text-foreground"}>{getValue<number>()}</span>
+          ),
+        },
+        {
+          id: "details",
+          size: 140,
+          header: () => <p className={"column-title"}>Details</p>,
+          cell: ({ row }) => (
+            <ShowButton
+              resource="classes"
+              recordItemId={row.original.id}
+              variant={"outline"}
+              size={"sm"}
+            >
+              View
+            </ShowButton>
           ),
         },
       ],
