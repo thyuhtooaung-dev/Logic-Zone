@@ -9,7 +9,7 @@ import { Card } from "@/components/ui/card.tsx";
 import { Badge } from "@/components/ui/badge.tsx";
 import { Separator } from "@/components/ui/separator.tsx";
 import { Button } from "@/components/ui/button";
-import {AdvancedImage} from "@cloudinary/react"
+import { AdvancedImage } from "@cloudinary/react";
 import { bannerPhoto } from "@/lib/cloudinary.ts";
 
 function Show() {
@@ -47,7 +47,6 @@ function Show() {
     description,
     status,
     capacity,
-    bannerUrl,
     bannerCldPubId,
     subject,
     teacher,
@@ -59,8 +58,11 @@ function Show() {
       <ShowViewHeader resource="classes" title={"Class Details"} />
 
       <div className="banner">
-        {bannerUrl ? (
-         <AdvancedImage alt={"Class Banner"} cldImg={bannerPhoto(bannerCldPubId ?? "", name)}/>
+        {bannerCldPubId ? (
+          <AdvancedImage
+            alt={"Class Banner"}
+            cldImg={bannerPhoto(bannerCldPubId ?? "", name)}
+          />
         ) : (
           <div className={"placeholder"} />
         )}
