@@ -1,8 +1,5 @@
-import {
-  createDataProvider,
-  CreateDataProviderOptions,
-} from "@refinedev/rest";
-import { ListResponse } from "@/types";
+import { createDataProvider, CreateDataProviderOptions } from "@refinedev/rest";
+import { GetOneResponse, ListResponse } from "@/types";
 import { BACKEND_BASE_URL } from "@/constants";
 import { CreateResponse, HttpError } from "@refinedev/core";
 
@@ -14,7 +11,10 @@ const buildHttpError = async (response: Response): Promise<HttpError> => {
   let message = "Request failed.";
 
   try {
-    const payload = (await response.json()) as { message?: string; error?: string };
+    const payload = (await response.json()) as {
+      message?: string;
+      error?: string;
+    };
 
     if (payload?.message) message = payload.message;
     if (!payload?.message && payload?.error) message = payload.error;
@@ -92,6 +92,17 @@ const options: CreateDataProviderOptions = {
       const json: CreateResponse = await response.json();
 
       return json.data;
+    },
+  },
+
+  getOne: {
+    getEndpoint: ({ resource, id }) => `${resource}/${id}`,
+
+    mapResponse: async (response) => {
+      if (!response.ok) throw await buildHttpError(response);
+      const json: GetOneResponse = await response.json();
+
+      return json.data ?? {};
     },
   },
 };
