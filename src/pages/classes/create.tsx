@@ -62,6 +62,7 @@ const ClassesCreate = () => {
     }
   };
 
+  // Fetch subjects list
   const { query: subjectsQuery } = useList<Subject>({
     resource: "subjects",
     pagination: {
@@ -69,6 +70,7 @@ const ClassesCreate = () => {
     },
   });
 
+  // Fetch teachers list
   const { query: teachersQuery } = useList<User>({
     resource: "users",
     filters: [

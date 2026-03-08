@@ -47,8 +47,8 @@ declare global {
         options: Record<string, unknown>,
         callback: (
           error: unknown,
-          result: CloudinaryUploadWidgetResults,
-        ) => void,
+          result: CloudinaryUploadWidgetResults
+        ) => void
       ) => CloudinaryWidget;
     };
   }
@@ -62,7 +62,6 @@ export interface UploadWidgetValue {
 export interface UploadWidgetProps {
   value?: UploadWidgetValue | null;
   onChange?: (value: UploadWidgetValue | null) => void;
-  onError?: (error: Error) => void;
   disabled?: boolean;
 }
 
