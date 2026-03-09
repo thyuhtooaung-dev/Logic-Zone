@@ -27,7 +27,7 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
-import { getAuthBaseURL } from "@/lib/auth-client";
+import { authClient } from "@/lib/auth-client";
 import { useLink, useLogin } from "@refinedev/core";
 
 const signInSchema = z.object({
@@ -60,21 +60,28 @@ export const SignInForm = () => {
     });
   };
 
-  const handleSocialSignIn = (provider: "google" | "github") => {
+  const handleSocialSignIn = async (provider: "google" | "github") => {
     setSocialSigning(true);
     form.clearErrors("root");
 
     try {
-      const signInURL = new URL("sign-in/social", `${getAuthBaseURL().replace(/\/?$/, "/")}`);
-      signInURL.searchParams.set("provider", provider);
-      signInURL.searchParams.set("callbackURL", `${window.location.origin}/`);
-      window.location.assign(signInURL.toString());
-    } catch (error) {
-      console.error("Social sign-in redirect error:", error);
+      const { error } = await authClient.signIn.social({
+        provider,
+        callbackURL: `${window.location.origin}/`,
+      });
+
+      if (error) {
+        form.setError("root", {
+          type: "manual",
+          message: "Social sign-in failed. Please try again.",
+        });
+      }
+    } catch {
       form.setError("root", {
         type: "manual",
         message: "Social sign-in failed. Please try again.",
       });
+    } finally {
       setSocialSigning(false);
     }
   };
@@ -179,8 +186,8 @@ export const SignInForm = () => {
                     className="social-button"
                     type="button"
                     disabled={socialSigning}
-                    onClick={() => {
-                      handleSocialSignIn("google");
+                    onClick={async () => {
+                      await handleSocialSignIn("google");
                     }}
                   >
                     <svg
@@ -202,8 +209,8 @@ export const SignInForm = () => {
                     className="social-button"
                     type="button"
                     disabled={socialSigning}
-                    onClick={() => {
-                      handleSocialSignIn("github");
+                    onClick={async () => {
+                      await handleSocialSignIn("github");
                     }}
                   >
                     <svg
