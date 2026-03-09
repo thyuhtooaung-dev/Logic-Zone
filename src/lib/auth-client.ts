@@ -1,18 +1,22 @@
 import { createAuthClient } from "better-auth/react";
 import { BACKEND_BASE_URL, USER_ROLES } from "../constants";
 
+const normalizeEnvValue = (value?: string) =>
+  value?.trim().replace(/^['"]|['"]$/g, "");
+
 const ensureTrailingSlash = (value: string) =>
   value.endsWith("/") ? value : `${value}/`;
 
 export const normalizeLocalBackendBaseURL = () => {
   const fallback = "http://localhost:3000/api/";
-  const raw = BACKEND_BASE_URL || fallback;
+  const raw = normalizeEnvValue(BACKEND_BASE_URL) || fallback;
 
   try {
     const url = new URL(raw);
 
     if (typeof window !== "undefined") {
       const frontendHost = window.location.hostname;
+      const frontendProtocol = window.location.protocol;
       const backendIsLocal =
         url.hostname === "localhost" || url.hostname === "127.0.0.1";
       const frontendIsLocal =
@@ -21,6 +25,11 @@ export const normalizeLocalBackendBaseURL = () => {
       // Keep both apps on the same local hostname so SameSite cookies work.
       if (backendIsLocal && frontendIsLocal) {
         url.hostname = frontendHost;
+      }
+
+      // Prevent insecure production config from forcing http cookies/callbacks.
+      if (!backendIsLocal && frontendProtocol === "https:" && url.protocol === "http:") {
+        url.protocol = "https:";
       }
     }
 
