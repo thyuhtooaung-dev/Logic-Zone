@@ -24,10 +24,11 @@ export const ForgotPasswordForm = () => {
 
   const { title } = useRefineOptions();
 
-  const { mutate: forgotPassword } = useForgotPassword();
+  const { mutate: forgotPassword, isPending } = useForgotPassword();
 
   const handleForgotPassword = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
+    if (isPending) return;
 
     forgotPassword(
       {
@@ -106,8 +107,9 @@ export const ForgotPasswordForm = () => {
                     "text-white",
                     "px-6"
                   )}
+                  disabled={isPending}
                 >
-                  Send
+                  {isPending ? "Sending..." : "Send"}
                 </Button>
               </div>
               {isSent ? (

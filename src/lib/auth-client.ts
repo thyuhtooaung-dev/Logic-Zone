@@ -1,7 +1,10 @@
 import { createAuthClient } from "better-auth/react";
 import { BACKEND_BASE_URL, USER_ROLES } from "../constants";
 
-const normalizeLocalBackendBaseURL = () => {
+const ensureTrailingSlash = (value: string) =>
+  value.endsWith("/") ? value : `${value}/`;
+
+export const normalizeLocalBackendBaseURL = () => {
   const fallback = "http://localhost:3000/api/";
   const raw = BACKEND_BASE_URL || fallback;
 
@@ -21,14 +24,17 @@ const normalizeLocalBackendBaseURL = () => {
       }
     }
 
-    return url.toString();
+    return ensureTrailingSlash(url.toString());
   } catch {
-    return raw;
+    return ensureTrailingSlash(raw);
   }
 };
 
+export const getAuthBaseURL = () =>
+  new URL("auth", normalizeLocalBackendBaseURL()).toString();
+
 export const authClient = createAuthClient({
-  baseURL: `${normalizeLocalBackendBaseURL()}auth`,
+  baseURL: getAuthBaseURL(),
   user: {
     additionalFields: {
       role: {

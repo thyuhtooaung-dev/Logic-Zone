@@ -36,9 +36,9 @@
   --sidebar-accent-foreground: oklch(0.3752 0.0394 256.8467);
   --sidebar-border: oklch(0.9214 0.0046 256.6723);
   --sidebar-ring: oklch(0.3752 0.0394 256.8467);
-  --font-sans: Inter, system-ui, sans-serif;
-  --font-serif: Georgia, serif;
-  --font-mono: JetBrains Mono, monospace;
+  --font-sans: "Inter", system-ui, sans-serif;
+  --font-serif: "Georgia", serif;
+  --font-mono: "JetBrains Mono", monospace;
   --radius: 1.25rem;
   --shadow-x: 0px;
   --shadow-y: 8px;
@@ -91,9 +91,9 @@
   --sidebar-accent-foreground: oklch(0.9210 0.0088 247.9219);
   --sidebar-border: oklch(0.2940 0.0168 256.7991);
   --sidebar-ring: oklch(0.5012 0.0217 256.7774);
-  --font-sans: Inter, system-ui, sans-serif;
-  --font-serif: Georgia, serif;
-  --font-mono: JetBrains Mono, monospace;
+  --font-sans: "Inter", system-ui, sans-serif;
+  --font-serif: "Georgia", serif;
+  --font-mono: "JetBrains Mono", monospace;
   --radius: 1.25rem;
   --shadow-x: 0px;
   --shadow-y: 12px;
@@ -179,10 +179,6 @@
     @apply bg-background text-foreground;
     letter-spacing: var(--tracking-normal);
   }
-}
-
-body {
-  letter-spacing: var(--tracking-normal);
 }
 
 @layer components {

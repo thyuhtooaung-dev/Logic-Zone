@@ -59,7 +59,7 @@ function App() {
                 syncWithLocation: true,
                 warnWhenUnsavedChanges: true,
                 projectId: "kkWuv7-GgBIfw-P8CGy0",
-                title: {text: "Logic Zone"}
+                title: { text: "Logic Zone", icon: <Home /> },
               }}
               resources={[
                 {

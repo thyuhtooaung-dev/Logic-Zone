@@ -100,8 +100,10 @@ export const ResetPasswordForm = () => {
               <Input
                 id="password"
                 type="password"
+                autoComplete="new-password"
                 value={password}
                 onChange={(e) => setPassword(e.target.value)}
+                disabled={isPending || isSuccess}
                 required
               />
             </div>
@@ -111,8 +113,10 @@ export const ResetPasswordForm = () => {
               <Input
                 id="confirmPassword"
                 type="password"
+                autoComplete="new-password"
                 value={confirmPassword}
                 onChange={(e) => setConfirmPassword(e.target.value)}
+                disabled={isPending || isSuccess}
                 required
               />
             </div>
@@ -130,7 +134,7 @@ export const ResetPasswordForm = () => {
             <Button
               type="submit"
               className={cn("bg-blue-600", "hover:bg-blue-700", "text-white", "w-full")}
-              disabled={isPending || !token}
+              disabled={isPending || !token || isSuccess}
             >
               {isPending ? "Updating..." : "Update password"}
             </Button>

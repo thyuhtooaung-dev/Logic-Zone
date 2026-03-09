@@ -1,7 +1,6 @@
 import type { AuthProvider } from "@refinedev/core";
 import { SignUpPayload, UserRole } from "@/types";
-import { authClient } from "@/lib/auth-client";
-import { BACKEND_BASE_URL } from "@/constants";
+import { authClient, getAuthBaseURL } from "@/lib/auth-client";
 
 type SessionUser = {
   id: string;
@@ -28,10 +27,7 @@ const normalizeSessionUser = (user: unknown): SessionUser => {
 const setUserState = (user: SessionUser | null) => {
   if (!user) {
     localStorage.removeItem("user");
-    return;
   }
-
-  localStorage.setItem("user", JSON.stringify(user));
 };
 
 const getSessionUser = async () => {
@@ -44,7 +40,8 @@ const getSessionUser = async () => {
   return normalizeSessionUser(data.user);
 };
 
-const authEndpoint = (path: string) => `${BACKEND_BASE_URL}auth/${path}`;
+const authEndpoint = (path: string) =>
+  new URL(path, `${getAuthBaseURL().replace(/\/?$/, "/")}`).toString();
 
 export const authProvider: AuthProvider = {
   register: async ({
@@ -78,7 +75,6 @@ export const authProvider: AuthProvider = {
 
       const user = normalizeSessionUser(data.user);
       setUserState(user);
-      console.log("Authenticated user profile:", user);
 
       return {
         success: true,
@@ -115,7 +111,6 @@ export const authProvider: AuthProvider = {
 
       const user = normalizeSessionUser(data.user);
       setUserState(user);
-      console.log("Authenticated user profile:", user);
 
       return {
         success: true,
@@ -246,7 +241,6 @@ export const authProvider: AuthProvider = {
 
     if (user) {
       setUserState(user);
-      console.log("Authenticated user profile:", user);
 
       return {
         authenticated: true,
