@@ -1,6 +1,10 @@
 import type { AuthProvider } from "@refinedev/core";
 import { SignUpPayload, UserRole } from "@/types";
-import { authClient, getAuthBaseURL } from "@/lib/auth-client";
+import {
+  authClient,
+  getAuthBaseURL,
+  getAuthCredentialsMode,
+} from "@/lib/auth-client";
 
 type SessionUser = {
   id: string;
@@ -154,7 +158,7 @@ export const authProvider: AuthProvider = {
 
       const response = await fetch(authEndpoint("request-password-reset"), {
         method: "POST",
-        credentials: "include",
+        credentials: getAuthCredentialsMode(),
         headers: {
           "Content-Type": "application/json",
         },
@@ -192,7 +196,7 @@ export const authProvider: AuthProvider = {
     try {
       const response = await fetch(authEndpoint("reset-password"), {
         method: "POST",
-        credentials: "include",
+        credentials: getAuthCredentialsMode(),
         headers: {
           "Content-Type": "application/json",
         },
