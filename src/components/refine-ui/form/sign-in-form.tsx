@@ -26,6 +26,7 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
+import { authClient } from "@/lib/auth-client";
 import { useLink, useLogin } from "@refinedev/core";
 
 const signInSchema = z.object({
@@ -55,6 +56,17 @@ export const SignInForm = () => {
       email: values.email,
       password: values.password,
     });
+  };
+
+  const handleSocialSignIn = async (provider: "google" | "github") => {
+    const { error } = await authClient.signIn.social({
+      provider,
+      callbackURL: `${window.location.origin}/`,
+    });
+
+    if (error) {
+      console.error(`${provider} OAuth failed`, error);
+    }
   };
 
   return (
@@ -156,6 +168,7 @@ export const SignInForm = () => {
                     variant="outline"
                     className="social-button"
                     type="button"
+                    onClick={() => handleSocialSignIn("google")}
                   >
                     <svg
                       width="21"
@@ -175,6 +188,7 @@ export const SignInForm = () => {
                     variant="outline"
                     className="social-button"
                     type="button"
+                    onClick={() => handleSocialSignIn("github")}
                   >
                     <svg
                       width="21"

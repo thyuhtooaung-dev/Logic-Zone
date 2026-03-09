@@ -10,7 +10,6 @@ import { Position } from "@cloudinary/url-gen/qualifiers/position";
 
 import { CLOUDINARY_CLOUD_NAME } from "@/constants";
 
-// Cloudinary instance.
 const cld = new Cloudinary({
   cloud: {
     cloudName: CLOUDINARY_CLOUD_NAME,
@@ -25,11 +24,9 @@ export const bannerPhoto = (imageCldPubId: string, name: string) => {
       .resize(
         fill().width(1200).height(297) // Aspect ratio 5:1
       )
-      // Optimize for web
       .delivery(format("auto"))
       .delivery(quality("auto"))
       .delivery(dpr("auto"))
-      // Text overlay with name
       .overlay(
         source(
           text(name, new TextStyle("roboto", 42).fontWeight("bold")).textColor(

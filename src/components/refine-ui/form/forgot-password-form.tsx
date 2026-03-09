@@ -18,6 +18,7 @@ import { useForgotPassword, useLink, useRefineOptions } from "@refinedev/core";
 
 export const ForgotPasswordForm = () => {
   const [email, setEmail] = useState("");
+  const [isSent, setIsSent] = useState(false);
 
   const Link = useLink();
 
@@ -28,9 +29,18 @@ export const ForgotPasswordForm = () => {
   const handleForgotPassword = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
-    forgotPassword({
-      email,
-    });
+    forgotPassword(
+      {
+        email,
+      },
+      {
+        onSuccess: (result) => {
+          if (result?.success) {
+            setIsSent(true);
+          }
+        },
+      }
+    );
   };
 
   return (
@@ -100,6 +110,11 @@ export const ForgotPasswordForm = () => {
                   Send
                 </Button>
               </div>
+              {isSent ? (
+                <p className={cn("text-sm", "text-green-600", "mt-2")}>
+                  If the email exists, a reset link has been sent.
+                </p>
+              ) : null}
             </div>
           </form>
 

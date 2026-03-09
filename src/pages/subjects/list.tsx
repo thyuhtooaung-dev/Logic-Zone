@@ -111,7 +111,6 @@ const SubjectListPage = () => {
         mode: "server",
       },
       filters: {
-        // Compose refine filters from the current UI selections.
         permanent: [...departmentFilters, ...searchFilters],
       },
       sorters: {
