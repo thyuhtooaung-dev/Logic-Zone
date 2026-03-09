@@ -1,6 +1,47 @@
 import type { AuthProvider } from "@refinedev/core";
-import { User, SignUpPayload } from "@/types";
-import { authClient } from "@/lib/auth-client";
+import { SignUpPayload, UserRole } from "@/types";
+import { authClient, getAuthBaseURL } from "@/lib/auth-client";
+
+type SessionUser = {
+  id: string;
+  email: string;
+  name: string;
+  image?: string | null;
+  role?: UserRole;
+  imageCldPubId?: string | null;
+};
+
+const normalizeSessionUser = (user: unknown): SessionUser => {
+  const source = (user ?? {}) as Partial<SessionUser>;
+
+  return {
+    id: source.id ?? "",
+    email: source.email ?? "",
+    name: source.name ?? "",
+    image: source.image ?? undefined,
+    role: source.role ?? UserRole.STUDENT,
+    imageCldPubId: source.imageCldPubId ?? undefined,
+  };
+};
+
+const setUserState = (user: SessionUser | null) => {
+  if (!user) {
+    localStorage.removeItem("user");
+  }
+};
+
+const getSessionUser = async () => {
+  const { data, error } = await authClient.getSession();
+
+  if (error || !data?.user) {
+    return null;
+  }
+
+  return normalizeSessionUser(data.user);
+};
+
+const authEndpoint = (path: string) =>
+  new URL(path, `${getAuthBaseURL().replace(/\/?$/, "/")}`).toString();
 
 export const authProvider: AuthProvider = {
   register: async ({
@@ -32,8 +73,8 @@ export const authProvider: AuthProvider = {
         };
       }
 
-      // Store user data
-      localStorage.setItem("user", JSON.stringify(data.user));
+      const user = normalizeSessionUser(data.user);
+      setUserState(user);
 
       return {
         success: true,
@@ -68,8 +109,8 @@ export const authProvider: AuthProvider = {
         };
       }
 
-      // Store user data
-      localStorage.setItem("user", JSON.stringify(data.user));
+      const user = normalizeSessionUser(data.user);
+      setUserState(user);
 
       return {
         success: true,
@@ -100,12 +141,91 @@ export const authProvider: AuthProvider = {
       };
     }
 
-    localStorage.removeItem("user");
+    setUserState(null);
 
     return {
       success: true,
       redirectTo: "/login",
     };
+  },
+  forgotPassword: async ({ email }) => {
+    try {
+      const redirectTo = `${window.location.origin}/reset-password`;
+
+      const response = await fetch(authEndpoint("request-password-reset"), {
+        method: "POST",
+        credentials: "include",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          email,
+          redirectTo,
+        }),
+      });
+
+      if (!response.ok) {
+        return {
+          success: false,
+          error: {
+            name: "Forgot password failed",
+            message: "Unable to send reset link. Please try again.",
+          },
+        };
+      }
+
+      return {
+        success: true,
+      };
+    } catch (error) {
+      console.error("Forgot password exception:", error);
+      return {
+        success: false,
+        error: {
+          name: "Forgot password failed",
+          message: "Unable to send reset link. Please try again.",
+        },
+      };
+    }
+  },
+  updatePassword: async ({ password, token }) => {
+    try {
+      const response = await fetch(authEndpoint("reset-password"), {
+        method: "POST",
+        credentials: "include",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          token,
+          newPassword: password,
+        }),
+      });
+
+      if (!response.ok) {
+        return {
+          success: false,
+          error: {
+            name: "Update password failed",
+            message: "Unable to update password. Please request a new link.",
+          },
+        };
+      }
+
+      return {
+        success: true,
+        redirectTo: "/login",
+      };
+    } catch (error) {
+      console.error("Update password exception:", error);
+      return {
+        success: false,
+        error: {
+          name: "Update password failed",
+          message: "Unable to update password. Please request a new link.",
+        },
+      };
+    }
   },
   onError: async (error) => {
     if (error.response?.status === 401) {
@@ -117,13 +237,17 @@ export const authProvider: AuthProvider = {
     return { error };
   },
   check: async () => {
-    const user = localStorage.getItem("user");
+    const user = await getSessionUser();
 
     if (user) {
+      setUserState(user);
+
       return {
         authenticated: true,
       };
     }
+
+    setUserState(null);
 
     return {
       authenticated: false,
@@ -136,28 +260,26 @@ export const authProvider: AuthProvider = {
     };
   },
   getPermissions: async () => {
-    const user = localStorage.getItem("user");
+    const user = await getSessionUser();
 
     if (!user) return null;
-    const parsedUser: User = JSON.parse(user);
 
     return {
-      role: parsedUser.role,
+      role: user.role,
     };
   },
   getIdentity: async () => {
-    const user = localStorage.getItem("user");
+    const user = await getSessionUser();
 
     if (!user) return null;
-    const parsedUser: User = JSON.parse(user);
 
     return {
-      id: parsedUser.id,
-      name: parsedUser.name,
-      email: parsedUser.email,
-      image: parsedUser.image,
-      role: parsedUser.role,
-      imageCldPubId: parsedUser.imageCldPubId,
+      id: user.id,
+      name: user.name,
+      email: user.email,
+      image: user.image ?? undefined,
+      role: user.role,
+      imageCldPubId: user.imageCldPubId ?? undefined,
     };
   },
 };

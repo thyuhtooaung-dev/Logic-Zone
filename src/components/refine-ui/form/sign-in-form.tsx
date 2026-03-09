@@ -2,6 +2,7 @@
 
 import { CircleHelp } from "lucide-react";
 import { zodResolver } from "@hookform/resolvers/zod";
+import { useState } from "react";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
 
@@ -26,6 +27,7 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
+import { authClient } from "@/lib/auth-client";
 import { useLink, useLogin } from "@refinedev/core";
 
 const signInSchema = z.object({
@@ -38,6 +40,7 @@ type SignInFormValues = z.infer<typeof signInSchema>;
 
 export const SignInForm = () => {
   const Link = useLink();
+  const [socialSigning, setSocialSigning] = useState(false);
 
   const { mutate: login, isPending: isLoggingIn } = useLogin();
 
@@ -55,6 +58,32 @@ export const SignInForm = () => {
       email: values.email,
       password: values.password,
     });
+  };
+
+  const handleSocialSignIn = async (provider: "google" | "github") => {
+    setSocialSigning(true);
+    form.clearErrors("root");
+
+    try {
+      const { error } = await authClient.signIn.social({
+        provider,
+        callbackURL: `${window.location.origin}/`,
+      });
+
+      if (error) {
+        form.setError("root", {
+          type: "manual",
+          message: "Social sign-in failed. Please try again.",
+        });
+      }
+    } catch {
+      form.setError("root", {
+        type: "manual",
+        message: "Social sign-in failed. Please try again.",
+      });
+    } finally {
+      setSocialSigning(false);
+    }
   };
 
   return (
@@ -156,6 +185,10 @@ export const SignInForm = () => {
                     variant="outline"
                     className="social-button"
                     type="button"
+                    disabled={socialSigning}
+                    onClick={async () => {
+                      await handleSocialSignIn("google");
+                    }}
                   >
                     <svg
                       width="21"
@@ -175,6 +208,10 @@ export const SignInForm = () => {
                     variant="outline"
                     className="social-button"
                     type="button"
+                    disabled={socialSigning}
+                    onClick={async () => {
+                      await handleSocialSignIn("github");
+                    }}
                   >
                     <svg
                       width="21"
@@ -193,6 +230,11 @@ export const SignInForm = () => {
                     <div>GitHub</div>
                   </Button>
                 </div>
+                {form.formState.errors.root?.message ? (
+                  <p className="text-sm text-red-600">
+                    {form.formState.errors.root.message}
+                  </p>
+                ) : null}
               </div>
             </form>
           </Form>

@@ -16,12 +16,12 @@ function UploadWidget({
   const [deleteToken, setDeleteToken] = useState<string | null>(null);
   const [isRemoving, setIsRemoving] = useState(false);
 
-  // Always keep latest onChange
+
   useEffect(() => {
     onChangeRef.current = onChange;
   }, [onChange]);
 
-  // Sync external value → internal preview
+
   useEffect(() => {
     setPreview(value);
     if (!value) {
@@ -29,7 +29,6 @@ function UploadWidget({
     }
   }, [value]);
 
-  // Initialize Cloudinary widget (client-side only)
   useEffect(() => {
     if (typeof window === "undefined") return;
 

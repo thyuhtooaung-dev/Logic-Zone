@@ -41,6 +41,8 @@ import FacultyShow from "./pages/faculty/show";
 import EnrollmentsCreate from "./pages/enrollments/create";
 import EnrollmentsJoin from "./pages/enrollments/join";
 import EnrollmentConfirm from "./pages/enrollments/confirm";
+import { ForgotPassword } from "./pages/forgot-password";
+import { ResetPassword } from "./pages/reset-password";
 
 function App() {
   return (
@@ -57,6 +59,7 @@ function App() {
                 syncWithLocation: true,
                 warnWhenUnsavedChanges: true,
                 projectId: "kkWuv7-GgBIfw-P8CGy0",
+                title: { text: "Logic Zone", icon: <Home /> },
               }}
               resources={[
                 {
@@ -127,6 +130,8 @@ function App() {
                 >
                   <Route path="/login" element={<Login />} />
                   <Route path="/register" element={<Register />} />
+                  <Route path="/forgot-password" element={<ForgotPassword />} />
+                  <Route path="/reset-password" element={<ResetPassword />} />
                 </Route>
 
                 <Route
