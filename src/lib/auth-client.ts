@@ -33,8 +33,22 @@ export const normalizeLocalBackendBaseURL = () => {
 export const getAuthBaseURL = () =>
   new URL("auth", normalizeLocalBackendBaseURL()).toString();
 
+export const getAuthCredentialsMode = (): RequestCredentials => {
+  if (typeof window === "undefined") return "include";
+
+  try {
+    const authURL = new URL(getAuthBaseURL());
+    return authURL.origin === window.location.origin ? "same-origin" : "include";
+  } catch {
+    return "include";
+  }
+};
+
 export const authClient = createAuthClient({
   baseURL: getAuthBaseURL(),
+  fetchOptions: {
+    credentials: getAuthCredentialsMode(),
+  },
   user: {
     additionalFields: {
       role: {
